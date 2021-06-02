@@ -25,20 +25,20 @@ optional arguments:
 
 
 ### Tested Device
-[ ] HC32D391
-[ ] HC32F4A0
-[ ] HC32F146x8/HC32M140x8
-[ ] HC32F146xA/HC32M140xA
-[ ] HC32F120
-[ ] HC32F460xExx
-[ ] HC32L13xx8/HC32F030x8
-[ ] HC32L15xx8
-[ ] HC32L15xxA
-[*] HC32L110x4xx/HC32F003x4xx
-[*] HC32L110x6xx/HC32F005x6xx
-[ ] HC32M120
-[ ] HC32x19xxCxx
-[ ] HC32x07xxAxx/HC32x17xxAxx
+- [ ] HC32D391
+- [ ] HC32F4A0
+- [ ] HC32F146x8/HC32M140x8
+- [ ] HC32F146xA/HC32M140xA
+- [ ] HC32F120
+- [ ] HC32F460xExx
+- [ ] HC32L13xx8/HC32F030x8
+- [ ] HC32L15xx8
+- [ ] HC32L15xxA
+- [x] HC32L110x4xx/HC32F003x4xx
+- [x] HC32L110x6xx/HC32F005x6xx
+- [ ] HC32M120
+- [ ] HC32x19xxCxx
+- [ ] HC32x07xxAxx/HC32x17xxAxx
 
 
 
