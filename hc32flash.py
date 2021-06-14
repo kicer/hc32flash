@@ -198,15 +198,16 @@ class SerialTransport():
             raise TransportError(str(e)) from None
 
         self.serial.timeout = 1
-        #self.serial.write_timeout = 0
+        self.serial.write_timeout = None
 
     def init_baud(self, baud):
         self.serial.baudrate = baud
 
-    def write(self, data):
+    def write(self, data, flush=True):
         if self.serial.inWaiting() > 0:
             self.serial.flushInput()
         self.serial.write(data)
+        if flush: self.serial.flush()
 
     def read(self, length):
         return self.serial.read(length)
@@ -218,11 +219,9 @@ class SerialTransport():
     def goto_bootloader(self):
         self.serial.rts = True
         time.sleep(0.1)
-        self.serial.write_timeout = 0
-        self.write(b'\x18\xFF'*10)
+        self.write(b'\x18\xFF'*10, flush=False)
         self.serial.rts = False
         ack = self.read(10)
-        self.serial.write_timeout = None
         return ack[-6:] == b'\x11'*6
 
     def check_lock(self):
@@ -265,13 +264,14 @@ class SerialTransport():
         return self.read(9) == ack
 
     def flash_erase(self):
-        self.write(self.ramcode_api(0x03,0,b''))
+        self.write(self.ramcode_api(0x02,0,b''))
         ack = self.ramcode_api(0x00, 0, b'')
         return self.read(9) == ack
 
     def flash_write(self, addr, dat):
         self.write(self.ramcode_api(0x04, addr, dat))
         ack = self.ramcode_api(0x00, addr, b'')
+        self.serial.flush()
         return self.read(9) == ack
 
     def flash_read(self, addr, size):
@@ -311,6 +311,7 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--unlock', action='store_true', help='Unlock. Erase device when locked')
     parser.add_argument('-L', '--lock', action='store_true', help='Lock. SWD port disabled')
     parser.add_argument('-R', '--reboot', action='store_true', help='Reboot device')
+    parser.add_argument('-e', '--erase', action='store_true', help='Erase device')
     parser.add_argument('-w', metavar='<filename>', help='Write data from file to device')
     parser.add_argument('-r', metavar='<filename>', help='Read data from device to file')
     parser.add_argument('-v', metavar='<filename>', help='Verify chksum data in device against file')
@@ -391,13 +392,15 @@ if __name__ == '__main__':
         sys.stdout.write("error\n")
         sys.exit(1)
 
+    # erase device
+    if args.erase or args.wfile:
+        sys.stdout.write("[ ERASE] %s\n" %
+            (transport.flash_erase() and 'ok' or 'error'))
+
     # write, with erase
     if args.wfile:
         with open(args.wfile, "rb") as fs:
             sys.stdout.write("[ WRITE] ")
-            if not transport.flash_erase():
-                sys.stderr.write("flash erase error")
-                sys.exit(1)
             psize = int(hc32xx['WritePacketSize'])
             addr0 = int(hc32xx['StartAddress'], 16)
             addr = addr0
@@ -405,16 +408,16 @@ if __name__ == '__main__':
                 _last = False
                 dat = fs.read(psize)
                 if len(dat) == 0:
-                    fs.close()
-                    break
-                elif len(dat) < psize:
-                    dat = dat + b'\xFF'*(psize-len(dat))
                     _last = True
-                if not transport.flash_write(addr, dat):
-                    sys.stderr.write("flash write error: 0x%08X\n" % addr)
-                    sys.exit(1)
                 else:
-                    sys.stdout.write("."); sys.stdout.flush()
+                    if len(dat) < psize:
+                        dat = dat + b'\xFF'*(psize-len(dat))
+                        _last = True
+                    if transport.flash_write(addr, dat):
+                        sys.stdout.write("."); sys.stdout.flush()
+                    else:
+                        sys.stdout.write("flash write error: 0x%08X\n" % addr)
+                        sys.exit(1)
                 addr += psize
                 if _last:
                     sys.stdout.write(" ok\n")
@@ -434,7 +437,7 @@ if __name__ == '__main__':
             for _ in range(pcnt):
                 dat = transport.flash_read(addr, psize)
                 if not dat:
-                    sys.stderr.write("flash read error: 0x%08X\n" % addr)
+                    sys.stdout.write("flash read error: 0x%08X\n" % addr)
                     sys.exit(1)
                 else:
                     fs.write(dat)
@@ -456,16 +459,16 @@ if __name__ == '__main__':
             if chk0 == chk1:
                 sys.stdout.write("0x%04X, ok\n" % chk0)
             else:
-                sys.stderr.write("flash verify error: %s/%s\n" % (chk0, chk1))
+                sys.stdout.write("flash verify error: %s/%s\n" % (chk0, chk1))
 
     # lock device
     if args.lock:
-        sys.stdout.write("[ LOCK ] %s" %
+        sys.stdout.write("[ LOCK ] %s\n" %
             (transport.flash_lock() and 'ok' or 'error'))
 
     # reboot
     if args.reboot:
-        sys.stdout.write("[REBOOT] %s" %
+        sys.stdout.write("[REBOOT] %s\n" %
             (transport.reboot() and 'ok' or 'error'))
 
     transport.close()
