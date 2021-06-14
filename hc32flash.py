@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os, sys, time, struct
 import serial
 import argparse
@@ -63,7 +65,7 @@ HDSC = {
         'BootloaderBaudrate': 1000000,
         'RamCodeBinFile': "m_flash.hc012",
         'WritePacketSize': 512,
-        'IspConnection': "请确认目标芯片与转接板的连接：\n半双工：VCC,GND,TOOL0,NRST\n全双工：VCC,GND,TXD,RXD,TOOL0,NRST\n",
+        'IspConnection': "Half-duplex: VCC,GND,TOOL0,NRST\nFull-duplex: VCC,GND,TXD,RXD,TOOL0,NRST\n",
     },
     'HC32F460xExx': {
         'MCUName': "HC32F460xExx",
@@ -147,7 +149,7 @@ HDSC = {
         'BootloaderBaudrate': 1000000,
         'RamCodeBinFile': "m_flash.hc013",
         'WritePacketSize': 512,
-        'IspConnection': "请确认目标芯片与转接板的连接：\n半双工：VCC,GND,TOOL0,NRST\n全双工：VCC,GND,TXD,RXD,TOOL0,NRST\n",
+        'IspConnection': "Half-duplex: VCC,GND,TOOL0,NRST\nFull-duplex: VCC,GND,TXD,RXD,TOOL0,NRST\n",
     },
     'HC32x19xxCxx': {
         'MCUName': "HC32x19xxCxx",
@@ -323,7 +325,7 @@ if __name__ == '__main__':
     # check device
     _ = None
     for dev in HDSC.keys():
-        if dev.find(args.dev.upper()) >= 0:
+        if dev.upper().find(args.dev.upper()) >= 0:
             args.dev,_ = dev,dev
             break
     if not _:
