@@ -314,6 +314,7 @@ if __name__ == '__main__':
     parser.add_argument('-L', '--lock', action='store_true', help='Lock. SWD port disabled')
     parser.add_argument('-R', '--reboot', action='store_true', help='Reboot device')
     parser.add_argument('-e', '--erase', action='store_true', help='Erase device')
+    parser.add_argument('-G', '--goboot', action='store_true', help='Goto bootloader')
     parser.add_argument('-w', metavar='<filename>', help='Write data from file to device')
     parser.add_argument('-r', metavar='<filename>', help='Read data from device to file')
     parser.add_argument('-v', metavar='<filename>', help='Verify chksum data in device against file')
@@ -351,14 +352,18 @@ if __name__ == '__main__':
     transport = SerialTransport(args.port, hc32xx['BootloaderBaudrate'])
     base_dir = os.path.dirname(os.path.realpath(__file__))
 
-    # stage 1. goto bootload
+    # stage 1. goto bootloader
     sys.stdout.write("Stage 1. Goto bootloader: ")
     sys.stdout.flush()
-    if transport.goto_bootloader():
-        sys.stdout.write("succ\n")
-    else:
-        sys.stdout.write("error\n")
-        sys.exit(1)
+    _err = 0
+    while not transport.goto_bootloader():
+        sys.stdout.write(".")
+        sys.stdout.flush()
+        _err += 1
+        if _err > (args.goboot and 100 or 0):
+            sys.stdout.write("error\n")
+            sys.exit(1)
+    sys.stdout.write("succ\n")
 
     # state 2. Check device
     sys.stdout.write("Stage 2. Check device: ")
