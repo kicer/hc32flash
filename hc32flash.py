@@ -208,8 +208,9 @@ class SerialTransport():
     def write(self, data, flush=True):
         if self.serial.inWaiting() > 0:
             self.serial.flushInput()
-        self.serial.write(data)
+        cnt = self.serial.write(data)
         if flush: self.serial.flush()
+        return cnt
 
     def read(self, length):
         return self.serial.read(length)
@@ -237,7 +238,7 @@ class SerialTransport():
         self.write(b'\xB5\x34\x84\x52\xBF')
         return self.read(1) == b'\x01'
 
-    def load_ramcode(self, _f):
+    def load_ramcode(self, _f, tryCnt=50):
         with open(_f, "rb") as fr:
             dat = fr.read()
             fr.close()
@@ -248,7 +249,10 @@ class SerialTransport():
             self.write(pkg+chksum)
             if self.read(1) == b'\x01':
                 cnt = self.write(dat + bytes([sum(dat)&0xFF]))
-                return self.read(1) == b'\x01'
+                while self.read(1) != b'\x01' and tryCnt > 0:
+                    time.sleep(0.1)
+                    tryCnt -= 1
+                return tryCnt > 0
         return False
 
     def run_ramcode(self):
@@ -297,11 +301,10 @@ class SerialTransport():
         return self.read(9) == ack
 
     def reboot(self):
-        self.serial.rts = True
-        time.sleep(0.1)
         self.serial.rts = False
+        time.sleep(0.1)
+        self.serial.rts = True
         return True
-
 
 if __name__ == '__main__':
     # parse arguments or use defaults
@@ -346,11 +349,17 @@ if __name__ == '__main__':
     sys.stdout.write('Page Size:  %s\n' % hc32xx['PageSize'])
     sys.stdout.write('Page Count: %s\n' % hc32xx['PageCount'])
     sys.stdout.write('Flash Size: %s\n' % hc32xx['FlashSize'])
-    #sys.stdout.write('RameCode:   %s\n' % hc32xx['RamCodeBinFile'])
+    sys.stdout.write('RameCode:   %s\n' % hc32xx['RamCodeBinFile'])
     sys.stdout.write('\n%s\n' % hc32xx['IspConnection'])
     # global vars
     transport = SerialTransport(args.port, hc32xx['BootloaderBaudrate'])
     base_dir = os.path.dirname(os.path.realpath(__file__))
+
+    if not args.goboot and args.reboot:
+        sys.stdout.write("[REBOOT] %s\n" %
+            (transport.reboot() and 'ok' or 'error'))
+        transport.close()
+        sys.exit(0)
 
     # stage 1. goto bootloader
     sys.stdout.write("Stage 1. Goto bootloader: ")
@@ -371,7 +380,7 @@ if __name__ == '__main__':
         if args.unlock and transport.unlock():
             sys.stdout.write("unlock\n")
         else:
-            sys.stdout.write("%s\n" % args.unlock and "locked" or "unlock failed")
+            sys.stdout.write("%s\n" % (args.unlock and "locked" or "unlock failed"))
             sys.exit(1)
     else:
         sys.stdout.write("pass\n")
@@ -399,39 +408,53 @@ if __name__ == '__main__':
         sys.stdout.write("error\n")
         sys.exit(1)
 
-    # erase device
-    if args.erase or args.wfile:
-        sys.stdout.write("[ ERASE] %s\n" %
-            (transport.flash_erase() and 'ok' or 'error'))
+    def exec_flash(args, transport):
+        # erase device
+        if args.erase or args.wfile:
+            sys.stdout.write("[ ERASE] %s\n" %
+                (transport.flash_erase() and 'ok' or 'error'))
 
-    # write, with erase
-    if args.wfile:
-        with open(args.wfile, "rb") as fs:
-            sys.stdout.write("[ WRITE] ")
-            psize = int(hc32xx['WritePacketSize'])
-            addr0 = int(hc32xx['StartAddress'], 16)
-            addr = addr0
-            while True:
-                _last = False
-                dat = fs.read(psize)
-                if len(dat) == 0:
-                    _last = True
-                else:
-                    if len(dat) < psize:
-                        dat = dat + b'\xFF'*(psize-len(dat))
+        # write, with erase
+        if args.wfile:
+            with open(args.wfile, "rb") as fs:
+                sys.stdout.write("[ WRITE] ")
+                psize = int(hc32xx['WritePacketSize'])
+                addr0 = int(hc32xx['StartAddress'], 16)
+                addr = addr0
+                while True:
+                    _last = False
+                    dat = fs.read(psize)
+                    if len(dat) == 0:
                         _last = True
-                    if transport.flash_write(addr, dat):
-                        sys.stdout.write("."); sys.stdout.flush()
                     else:
-                        sys.stdout.write("flash write error: 0x%08X\n" % addr)
-                        sys.exit(1)
-                addr += psize
-                if _last:
-                    sys.stdout.write(" ok\n")
-                    fs.close()
-                    if not args.vfile:
-                        args.vfile = args.wfile
-                    break
+                        if len(dat) < psize:
+                            dat = dat + b'\xFF'*(psize-len(dat))
+                            _last = True
+                        if transport.flash_write(addr, dat):
+                            sys.stdout.write("."); sys.stdout.flush()
+                        else:
+                            sys.stdout.write("flash write error: 0x%08X\n" % addr)
+                            #sys.exit(1)
+                            return 1
+                    addr += psize
+                    if _last:
+                        sys.stdout.write(" ok\n")
+                        fs.close()
+                        if not args.vfile:
+                            args.vfile = args.wfile
+                        break
+        return 0
+
+    _err = 0
+    while exec_flash(args, transport) != 0:
+        sys.stdout.write(".")
+        sys.stdout.flush()
+        _err += 1
+        if _err > (args.goboot and 10 or 0):
+            sys.stdout.write("error\n")
+            sys.exit(1)
+    sys.stdout.write("succ\n")
+
 
     # read to file
     if args.rfile:
