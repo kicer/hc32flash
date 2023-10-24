@@ -398,6 +398,7 @@ if __name__ == '__main__':
     # stage 4. run ramcode
     sys.stdout.write("Stage 4. Run ramcode: %s\n" %
         transport.run_ramcode())
+    time.sleep(0.5) # delay for boot
 
     # stage 5. set baud
     sys.stdout.write("Stage 5. Set baud: ")
