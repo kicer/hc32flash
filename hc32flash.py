@@ -2,6 +2,7 @@
 
 import os, sys, time, struct
 import serial
+import serial.tools.list_ports
 import argparse
 
 version = "0.1.2"
@@ -190,12 +191,14 @@ class TransportError(Exception):
 
 class SerialTransport():
     def __init__(self, port, baud):
-        self.port = port
-        self.baud = baud
         self.serial = None
 
         try:
             self.serial = serial.Serial(port, baud)
+            self.serial.rts = False
+            self.serial.dtr = False
+            self.serial.rts = True
+            self.serial.dtr = True
         except serial.SerialException as e:
             raise TransportError(str(e)) from None
 
@@ -220,12 +223,26 @@ class SerialTransport():
         self.serial.close()
 
     def goto_bootloader(self):
-        self.serial.rts = True
-        time.sleep(0.1)
-        self.write(b'\x18\xFF'*10, flush=False)
-        self.serial.rts = False
-        ack = self.read(10)
-        return ack[-6:] == b'\x11'*6
+        _cnt = 0
+        while _cnt < 50:
+            time.sleep(0.01)
+            self.write(b'\x18\xFF'*10, flush=False)
+            step = _cnt % 20
+            if step == 0:
+                self.serial.rts = True
+                self.serial.dtr = True
+            elif step == 10:
+                self.serial.rts = False
+                self.serial.dtr = False
+            elif step > 10:
+                if self.serial.in_waiting:
+                    ack = self.read(self.serial.in_waiting)
+                    if ack[-6:] == b'\x11'*6:
+                        time.sleep(1) # clear input buffer
+                        self.serial.flushInput()
+                        return True
+            _cnt += 1
+        return False
 
     def check_lock(self):
         self.write(b'\x01\xFC\x0B\x00\x00\x02\x00\x00\x00\x0A')
@@ -301,9 +318,11 @@ class SerialTransport():
         return self.read(9) == ack
 
     def reboot(self):
-        self.serial.rts = False
-        time.sleep(0.1)
         self.serial.rts = True
+        self.serial.dtr = True
+        time.sleep(0.2)
+        self.serial.rts = False
+        self.serial.dtr = False
         return True
 
 if __name__ == '__main__':
@@ -369,7 +388,7 @@ if __name__ == '__main__':
         sys.stdout.write(".")
         sys.stdout.flush()
         _err += 1
-        if _err > (args.goboot and 100 or 0):
+        if _err > (args.goboot and 10 or 0):
             sys.stdout.write("error\n")
             sys.exit(1)
     sys.stdout.write("succ\n")
