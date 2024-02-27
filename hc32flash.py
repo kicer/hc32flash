@@ -191,17 +191,20 @@ class TransportError(Exception):
 
 class SerialTransport():
     def __init__(self, port, baud):
+        if not port:
+            _ports = serial.tools.list_ports.comports()
+            if len(_ports):
+                port = _ports[-1].device
         self.serial = None
-
         try:
             self.serial = serial.Serial(port, baud)
-            self.serial.rts = False
-            self.serial.dtr = False
-            self.serial.rts = True
-            self.serial.dtr = True
         except serial.SerialException as e:
             raise TransportError(str(e)) from None
 
+        self.serial.rts = False
+        self.serial.dtr = False
+        self.serial.rts = True
+        self.serial.dtr = True
         self.serial.timeout = 1
         self.serial.write_timeout = None
 
@@ -330,7 +333,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='HC32xx Flash Downloader.')
     parser.add_argument('-l', '--list', action='store_true', help='List support device')
     parser.add_argument('-d', metavar=' device', default='HC32F003', help='Device name, default HC32F003')
-    parser.add_argument('-p', metavar=' port', default='/dev/ttyUSB0', help='Serial port, default /dev/ttyUSB0')
+    parser.add_argument('-p', metavar=' port', default='', help='Serial port, default serial[-1]')
     parser.add_argument('-b', metavar=' baudrate',type=int,default=0, help='Serial baudrate')
     parser.add_argument('-u', '--unlock', action='store_true', help='Unlock. Erase device when locked')
     parser.add_argument('-L', '--lock', action='store_true', help='Lock. SWD port disabled')
