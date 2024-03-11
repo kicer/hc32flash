@@ -240,7 +240,7 @@ class SerialTransport():
             elif step > 10:
                 if self.serial.in_waiting:
                     ack = self.read(self.serial.in_waiting)
-                    if ack[-6:] == b'\x11'*6:
+                    if ack[-6:] == b'\x11':
                         time.sleep(1) # clear input buffer
                         self.serial.flushInput()
                         return True
@@ -391,7 +391,7 @@ if __name__ == '__main__':
         sys.stdout.write(".")
         sys.stdout.flush()
         _err += 1
-        if _err > (args.goboot and 10 or 0):
+        if _err > (args.goboot and 30 or 0):
             sys.stdout.write("error\n")
             sys.exit(1)
     sys.stdout.write("succ\n")
