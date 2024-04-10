@@ -226,25 +226,19 @@ class SerialTransport():
         self.serial.close()
 
     def goto_bootloader(self):
-        _cnt = 0
-        while _cnt < 50:
-            time.sleep(0.01)
-            self.write(b'\x18\xFF'*10, flush=False)
-            step = _cnt % 20
-            if step == 0:
-                self.serial.rts = True
-                self.serial.dtr = True
-            elif step == 10:
-                self.serial.rts = False
-                self.serial.dtr = False
-            elif step > 10:
-                if self.serial.in_waiting:
-                    ack = self.read(self.serial.in_waiting)
-                    if ack[-6:] == b'\x11':
-                        time.sleep(1) # clear input buffer
-                        self.serial.flushInput()
-                        return True
-            _cnt += 1
+        self.serial.rts = True
+        self.serial.dtr = True
+        time.sleep(0.5)
+        self.serial.rts = False
+        self.serial.dtr = False
+        self.write(b'\x18\xFF'*10, flush=False)
+        time.sleep(0.5)
+        if self.serial.in_waiting:
+            ack = self.read(self.serial.in_waiting)
+            if ack[-6:] == b'\x11'*6:
+                time.sleep(3) # clear input buffer
+                self.serial.flushInput()
+                return True
         return False
 
     def check_lock(self):
