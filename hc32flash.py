@@ -229,13 +229,14 @@ class SerialTransport():
         self.serial.rts = True
         self.serial.dtr = True
         time.sleep(0.5)
+        self.write(b'\x18\xFF'*10, flush=False)
         self.serial.rts = False
         self.serial.dtr = False
         self.write(b'\x18\xFF'*10, flush=False)
         time.sleep(0.5)
         if self.serial.in_waiting:
             ack = self.read(self.serial.in_waiting)
-            if ack[-6:] == b'\x11'*6:
+            if ack[-3:] == b'\x11'*3:
                 time.sleep(3) # clear input buffer
                 self.serial.flushInput()
                 return True
