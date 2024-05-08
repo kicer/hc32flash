@@ -229,7 +229,7 @@ class SerialTransport():
         self.serial.rts = True
         self.serial.dtr = True
         time.sleep(0.5)
-        self.write(b'\x18\xFF'*10, flush=False)
+        self.write(b'\x18\xFF'*100, flush=False)
         self.serial.rts = False
         self.serial.dtr = False
         self.write(b'\x18\xFF'*10, flush=False)
@@ -240,6 +240,17 @@ class SerialTransport():
                 time.sleep(3) # clear input buffer
                 self.serial.flushInput()
                 return True
+        return False
+
+    def wait_bootloader(self):
+        for x in range(10):
+            self.write(b'\x18\xFF'*50, flush=False)
+            time.sleep(0.1)
+            if self.serial.in_waiting:
+                ack = self.read(self.serial.in_waiting)
+                if ack[-3:] == b'\x11'*3:
+                    self.serial.flushInput()
+                    return True
         return False
 
     def check_lock(self):
@@ -382,8 +393,19 @@ if __name__ == '__main__':
     sys.stdout.write("Stage 1. Goto bootloader: ")
     sys.stdout.flush()
     _err = 0
+    if not args.goboot: # 需手动进入复位
+        sys.stdout.write("wait press reset key ")
+        sys.stdout.flush()
+        while not transport.wait_bootloader():
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            _err += 1
+            if _err > 30: # 等待最多30s
+                sys.stdout.write("error\n")
+                sys.exit(1)
+    # 使用控制脚自动进入复位
     while not transport.goto_bootloader():
-        sys.stdout.write(".")
+        sys.stdout.write("+")
         sys.stdout.flush()
         _err += 1
         if _err > (args.goboot and 30 or 0):
