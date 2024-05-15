@@ -190,7 +190,7 @@ class TransportError(Exception):
 
 
 class SerialTransport():
-    def __init__(self, port, baud):
+    def __init__(self, port, baud, dir1=False):
         if not port:
             _ports = serial.tools.list_ports.comports()
             if len(_ports):
@@ -201,10 +201,13 @@ class SerialTransport():
         except serial.SerialException as e:
             raise TransportError(str(e)) from None
 
-        self.serial.rts = False
-        self.serial.dtr = False
-        self.serial.rts = True
-        self.serial.dtr = True
+        self.SET = dir1
+        self.RESET = (not dir1)
+
+        self.serial.rts = self.SET
+        self.serial.dtr = self.SET
+        self.serial.rts = self.RESET
+        self.serial.dtr = self.RESET
         self.serial.timeout = 1
         self.serial.write_timeout = None
 
@@ -226,18 +229,18 @@ class SerialTransport():
         self.serial.close()
 
     def goto_bootloader(self):
-        self.serial.rts = True
-        self.serial.dtr = True
+        self.serial.rts = self.RESET
+        self.serial.dtr = self.RESET
         time.sleep(0.5)
         self.write(b'\x18\xFF'*100, flush=False)
-        self.serial.rts = False
-        self.serial.dtr = False
+        self.serial.rts = self.SET
+        self.serial.dtr = self.SET
         self.write(b'\x18\xFF'*10, flush=False)
         time.sleep(0.5)
         if self.serial.in_waiting:
             ack = self.read(self.serial.in_waiting)
             if ack[-3:] == b'\x11'*3:
-                time.sleep(3) # clear input buffer
+                time.sleep(2) # clear input buffer
                 self.serial.flushInput()
                 return True
         return False
@@ -327,11 +330,11 @@ class SerialTransport():
         return self.read(9) == ack
 
     def reboot(self):
-        self.serial.rts = True
-        self.serial.dtr = True
+        self.serial.rts = self.RESET
+        self.serial.dtr = self.RESET
         time.sleep(0.2)
-        self.serial.rts = False
-        self.serial.dtr = False
+        self.serial.rts = self.SET
+        self.serial.dtr = self.SET
         return True
 
 if __name__ == '__main__':
@@ -346,6 +349,7 @@ if __name__ == '__main__':
     parser.add_argument('-R', '--reboot', action='store_true', help='Reboot device')
     parser.add_argument('-e', '--erase', action='store_true', help='Erase device')
     parser.add_argument('-G', '--goboot', action='store_true', help='Goto bootloader')
+    parser.add_argument('-D', '--dir1', action='store_true', help='RTS/DTR output 1 for reset')
     parser.add_argument('-w', metavar='<filename>', help='Write data from file to device')
     parser.add_argument('-r', metavar='<filename>', help='Read data from device to file')
     parser.add_argument('-v', metavar='<filename>', help='Verify chksum data in device against file')
@@ -380,7 +384,7 @@ if __name__ == '__main__':
     sys.stdout.write('RameCode:   %s\n' % hc32xx['RamCodeBinFile'])
     sys.stdout.write('\n%s\n' % hc32xx['IspConnection'])
     # global vars
-    transport = SerialTransport(args.port, hc32xx['BootloaderBaudrate'])
+    transport = SerialTransport(args.port, hc32xx['BootloaderBaudrate'], dir1=args.dir1)
     base_dir = os.path.dirname(os.path.realpath(__file__))
 
     if not args.goboot and args.reboot:
