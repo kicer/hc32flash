@@ -376,7 +376,9 @@ if __name__ == '__main__':
     # mcu info
     hc32xx =  HDSC[args.dev]
     args.baud = args.baud or hc32xx['BootloaderBaudrate']
+    transport = SerialTransport(args.port, hc32xx['BootloaderBaudrate'], dir1=args.dir1)
     sys.stdout.write('Device:     %s\n' % args.dev)
+    sys.stdout.write('Serial:     %s\n' % transport.serial.port)
     sys.stdout.write('Boot Baud:  %s\n' % args.baud)
     sys.stdout.write('Page Size:  %s\n' % hc32xx['PageSize'])
     sys.stdout.write('Page Count: %s\n' % hc32xx['PageCount'])
@@ -384,7 +386,6 @@ if __name__ == '__main__':
     sys.stdout.write('RameCode:   %s\n' % hc32xx['RamCodeBinFile'])
     sys.stdout.write('\n%s\n' % hc32xx['IspConnection'])
     # global vars
-    transport = SerialTransport(args.port, hc32xx['BootloaderBaudrate'], dir1=args.dir1)
     base_dir = os.path.dirname(os.path.realpath(__file__))
 
     if not args.goboot and args.reboot:
@@ -423,7 +424,7 @@ if __name__ == '__main__':
         if args.unlock and transport.unlock():
             sys.stdout.write("unlock\n")
         else:
-            sys.stdout.write("%s\n" % (args.unlock and "locked" or "unlock failed"))
+            sys.stdout.write("%s\n" % (args.unlock and "unlock failed" or "locked"))
             sys.exit(1)
     else:
         sys.stdout.write("pass\n")
