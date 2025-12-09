@@ -5,9 +5,114 @@ import serial
 import serial.tools.list_ports
 import argparse
 
-version = "0.1.2"
+# XHSC ISP V2.21
+version = "2.21"
 
 HDSC = {
+    'HC32A136': {
+        'MCUName': "HC32A136",
+        'FrequecyList': ["1000000", "256000", "128000", "115200", "76800", "38400", "19200", "9600"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "128",
+        'FlashSize': "64K",
+        'BootloaderBaudrate': 9600,
+        'RamCodeBinFile': "m_flash.hc006",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA09/PA14)<--->    Serial.RXD
+MCU.RXD(PA10/PA13)<--->    Serial.TXD
+MCU.MODE          <--->    MCU.VCC
+""",
+    },
+    'HC32A448': {
+        'MCUName': "HC32A448",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "32",
+        'FlashSize': "256K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc032",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA13)     <--->    Serial.RXD
+MCU.RXD(PA14)     <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+MCU.MODE          <--->    MCU.VCC
+""",
+    },
+    'HC32A460': {
+        'MCUName': "HC32A460",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "64",
+        'FlashSize': "512K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc010",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA13)     <--->    Serial.RXD
+MCU.RXD(PA14)     <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+MCU.MODE          <--->    MCU.GND
+""",
+    },
+    'HC32A472xExx': {
+        'MCUName': "HC32A472xExx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "64",
+        'FlashSize': "512K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc021",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC                <--->  Serial.VCC
+MCU.GND                <--->  Serial.GND
+MCU.TXD(PA2,PA9 ,PA13) <--->  Serial.RXD
+MCU.RXD(PA3,PA10,PA14) <--->  Serial.TXD
+MCU.MODE               <--->  MCU.VCC
+""",
+    },
+    'HC32A4A0': {
+        'MCUName': "HC32A4A0",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "256",
+        'FlashSize': "2M",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc020",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC            <--->    Serial.VCC
+MCU.GND            <--->    Serial.GND
+MCU.TXD(PA13,PB10) <--->    Serial.RXD
+MCU.RXD(PA14,PB11) <--->    Serial.TXD
+MCU.MODE           <--->    MCU.VCC
+""",
+    },
+    'HC32A4A8': {
+        'MCUName': "HC32A4A8",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "256",
+        'FlashSize': "2M",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc037",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC            <--->    Serial.VCC
+MCU.GND            <--->    Serial.GND
+MCU.TXD(PA13,PB10) <--->    Serial.RXD
+MCU.RXD(PA14,PB11) <--->    Serial.TXD
+MCU.MODE           <--->    MCU.VCC
+""",
+    },
     'HC32D391': {
         'MCUName': "HC32D391",
         'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
@@ -18,23 +123,93 @@ HDSC = {
         'BootloaderBaudrate': 115200,
         'RamCodeBinFile': "m_flash.hc010",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(PA13)     <--->    Serial.RXD\nMCU.RXD(PA14)     <--->    Serial.TXD\nMCU.MODE          <--->    MCU.GND\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA13)     <--->    Serial.RXD
+MCU.RXD(PA14)     <--->    Serial.TXD
+MCU.MODE          <--->    MCU.GND
+""",
     },
-    'HC32F4A0': {
-        'MCUName': "HC32F4A0",
-        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+    'HC32F002x4xx': {
+        'MCUName': "HC32F002x4xx",
+        'FrequecyList': ["1000000", "256000", "128000", "115200", "76800", "38400"],
         'StartAddress': "00000000",
-        'PageSize': "8192",
-        'PageCount': "256",
-        'FlashSize': "2M",
+        'PageSize': "512",
+        'PageCount': "36",
+        'FlashSize': "18K",
         'BootloaderBaudrate': 115200,
-        'RamCodeBinFile': "m_flash.hc020",
+        'RamCodeBinFile': "m_flash.hc008",
+        'WritePacketSize': 240,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PD01)     <--->    Serial.RXD
+MCU.RXD(PC07)     <--->    Serial.TXD
+MCU.RSTB          <--->    Serial.RTS/DTR
+""",
+    },
+    'HC32F052/HC32A052': {
+        'MCUName': "HC32F052/HC32A052",
+        'FrequecyList': ["500000", "250000", "115200", "76800", "38400", "19200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "256",
+        'FlashSize': "128K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc008",
+        'WritePacketSize': 240,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA14)     <--->    Serial.RXD
+MCU.RXD(PA13)     <--->    Serial.TXD
+MCU.BOOT0         <--->    MCU.VCC
+""",
+    },
+    'HC32F115': {
+        'MCUName': "HC32F115",
+        'FrequecyList': ["500000"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "128",
+        'FlashSize': "64K",
+        'BootloaderBaudrate': 500000,
+        'RamCodeBinFile': "m_flash.hc041",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC            <--->    Serial.VCC\nMCU.GND            <--->    Serial.GND\nMCU.TXD(PA13,PB10) <--->    Serial.RXD\nMCU.RXD(PA14,PB11) <--->    Serial.TXD\nMCU.MODE           <--->    MCU.VCC\n",
+        'IspConnection': """请确认XHLink的连接：
+J6.ISP            <--->    J6.GND
+J6.3V3            <--->    J6.VCC
+请确认目标芯片与XHLink的连接：
+半双工：
+MCU.VCC           <--->    XHLink.3V3
+MCU.GND           <--->    XHLink.GND
+MCU.RST           <--->    XHLink.RST
+MCU.TOOL0(P40)    <--->    XHLink.DIO
+全双工：
+MCU.VCC           <--->    XHLink.3V3
+MCU.GND           <--->    XHLink.GND
+MCU.RST           <--->    XHLink.RST
+MCU.TOOL0(P40)    <--->    XHLink.DIO
+MCU.TOOLTxD(P12)  <--->    XHLink.RX
+MCU.TOOLRxD(P11)  <--->    XHLink.TX
+""",
+    },
+    'HC32F120': {
+        'MCUName': "HC32F120",
+        'FrequecyList': ["1000000"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "128",
+        'FlashSize': "64K",
+        'BootloaderBaudrate': 1000000,
+        'RamCodeBinFile': "m_flash.hc012",
+        'WritePacketSize': 512,
+        'IspConnection': """请确认目标芯片与转接板的连接：
+半双工：VCC,GND,TOOL0,NRST
+全双工：VCC,GND,TXD,RXD,TOOL0,NRST
+""",
     },
     'HC32F146x8/HC32M140x8': {
         'MCUName': "HC32F146x8/HC32M140x8",
-        'FrequecyList': ["Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
+        'FrequecyList': ["{", "Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
         'StartAddress': "00000000",
         'PageSize': "512",
         'PageCount': "128",
@@ -42,11 +217,16 @@ HDSC = {
         'BootloaderBaudrate': 9600,
         'RamCodeBinFile': "m_flash.hc001",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(P11)      <--->    Serial.RXD\nMCU.RXD(P12)      <--->    Serial.TXD\nMCU.MODE          <--->    MCU.VCC\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(P11)      <--->    Serial.RXD
+MCU.RXD(P12)      <--->    Serial.TXD
+MCU.MODE          <--->    MCU.VCC
+""",
     },
     'HC32F146xA/HC32M140xA': {
         'MCUName': "HC32F146xA/HC32M140xA",
-        'FrequecyList': ["Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
+        'FrequecyList': ["{", "Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
         'StartAddress': "00000000",
         'PageSize': "512",
         'PageCount': "256",
@@ -54,22 +234,188 @@ HDSC = {
         'BootloaderBaudrate': 9600,
         'RamCodeBinFile': "m_flash.hc001",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(P11)      <--->    Serial.RXD\nMCU.RXD(P12)      <--->    Serial.TXD\nMCU.MODE          <--->    MCU.VCC\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(P11)      <--->    Serial.RXD
+MCU.RXD(P12)      <--->    Serial.TXD
+MCU.MODE          <--->    MCU.VCC
+""",
     },
-    'HC32F120': {
-        'MCUName': "HC32F120",
-        'FrequecyList': ["1000000"],
+    'HC32F155': {
+        'MCUName': "HC32F155",
+        'FrequecyList': ["500000"],
         'StartAddress': "00000000",
         'PageSize': "512",
-        'PageCount': "64",
-        'FlashSize': "32K",
-        'BootloaderBaudrate': 1000000,
-        'RamCodeBinFile': "m_flash.hc012",
+        'PageCount': "512",
+        'FlashSize': "256K",
+        'BootloaderBaudrate': 500000,
+        'RamCodeBinFile': "m_flash.hc042",
         'WritePacketSize': 512,
-        'IspConnection': "Half-duplex: VCC,GND,TOOL0,NRST\nFull-duplex: VCC,GND,TXD,RXD,TOOL0,NRST\n",
+        'IspConnection': """请确认XHLink的连接：
+J6.ISP            <--->    J6.GND
+J6.3V3            <--->    J6.VCC
+请确认目标芯片与XHLink的连接：
+半双工：
+MCU.VCC           <--->    XHLink.3V3
+MCU.GND           <--->    XHLink.GND
+MCU.RST           <--->    XHLink.RST
+MCU.TOOL0(P40)    <--->    XHLink.DIO
+全双工：
+MCU.VCC                      <--->    XHLink.3V3
+MCU.GND                      <--->    XHLink.GND
+MCU.RST                      <--->    XHLink.RST
+MCU.TOOL0(P40)               <--->    XHLink.DIO
+MCU.TOOLTxD(P12)/SWDIO(P51)  <--->    XHLink.RX
+MCU.TOOLRxD(P11)/SWCLK(P50)  <--->    XHLink.TX
+""",
     },
-    'HC32F460xExx': {
-        'MCUName': "HC32F460xExx",
+    'HC32F160xAxx': {
+        'MCUName': "HC32F160xAxx",
+        'FrequecyList': ["1000000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "258",
+        'FlashSize': "129K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc023",
+        'WritePacketSize': 512,
+        'IspConnection': """请确认目标芯片与XHSC DAP的连接：
+UART单线：                          |        UART双线：
+MCU.VCC        <---> DAP.VCC        |        MCU.VCC          <---> DAP.VCC
+MCU.GND        <---> DAP.GND        |        MCU.GND          <---> DAP.GND
+MCU.TOOL0(P40) <---> DAP.DIO(TOOL0) |        MCU.TOOL0(P40)   <---> DAP.DIO(TOOL0)
+MCU.RST        <---> DAP.RST        |        MCU.RST          <---> DAP.RST
+DAP.ISP        <---> DAP.GND        |        MCU.TOOLRxD(P11) <---> DAP.TX
+                                    |        MCU.TOOLTxD(P12) <---> DAP.RX
+                                    |        DAP.ISP          <---> DAP.GND""",
+    },
+    'HC32F160xCxx': {
+        'MCUName': "HC32F160xCxx",
+        'FrequecyList': ["1000000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "514",
+        'FlashSize': "257K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc023",
+        'WritePacketSize': 512,
+        'IspConnection': """请确认目标芯片与XHSC DAP的连接：
+UART单线：                          |        UART双线：
+MCU.VCC        <---> DAP.VCC        |        MCU.VCC          <---> DAP.VCC
+MCU.GND        <---> DAP.GND        |        MCU.GND          <---> DAP.GND
+MCU.TOOL0(P40) <---> DAP.DIO(TOOL0) |        MCU.TOOL0(P40)   <---> DAP.DIO(TOOL0)
+MCU.RST        <---> DAP.RST        |        MCU.RST          <---> DAP.RST
+DAP.ISP        <---> DAP.GND        |        MCU.TOOLRxD(P11) <---> DAP.TX
+                                    |        MCU.TOOLTxD(P12) <---> DAP.RX
+                                    |        DAP.ISP          <---> DAP.GND""",
+    },
+    'HC32F334x8xx': {
+        'MCUName': "HC32F334x8xx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "4096",
+        'PageCount': "16",
+        'FlashSize': "64K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc039",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC                <--->  Serial.VCC
+MCU.GND                <--->  Serial.GND
+MCU.TXD(PA2,PA9 ,PA13) <--->  Serial.RXD
+MCU.RXD(PA3,PA10,PA14) <--->  Serial.TXD
+MCU.MODE               <--->  MCU.VCC
+""",
+    },
+    'HC32F334xAxx': {
+        'MCUName': "HC32F334xAxx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "4096",
+        'PageCount': "32",
+        'FlashSize': "128K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc039",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC                <--->  Serial.VCC
+MCU.GND                <--->  Serial.GND
+MCU.TXD(PA2,PA9 ,PA13) <--->  Serial.RXD
+MCU.RXD(PA3,PA10,PA14) <--->  Serial.TXD
+MCU.MODE               <--->  MCU.VCC
+""",
+    },
+    'HC32F420': {
+        'MCUName': "HC32F420",
+        'FrequecyList': ["1000000", "500000", "250000", "115200", "76800", "38400", "19200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "256",
+        'FlashSize': "128K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc008",
+        'WritePacketSize': 240,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA14)     <--->    Serial.RXD
+MCU.RXD(PA13)     <--->    Serial.TXD
+MCU.BOOT0         <--->    MCU.VCC
+""",
+    },
+    'HC32F448xAxx/HC32M441xAxx': {
+        'MCUName': "HC32F448xAxx/HC32M441xAxx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "16",
+        'FlashSize': "128K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc032",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA13)     <--->    Serial.RXD
+MCU.RXD(PA14)     <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+MCU.MODE          <--->    MCU.VCC
+""",
+    },
+    'HC32F448xCxx/HC32M441xCxx': {
+        'MCUName': "HC32F448xCxx/HC32M441xCxx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "32",
+        'FlashSize': "256K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc032",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA13)     <--->    Serial.RXD
+MCU.RXD(PA14)     <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+MCU.MODE          <--->    MCU.VCC
+""",
+    },
+    'HC32F460xCxx': {
+        'MCUName': "HC32F460xCxx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "32",
+        'FlashSize': "256K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc010",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA13)     <--->    Serial.RXD
+MCU.RXD(PA14)     <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+MCU.MODE          <--->    MCU.GND
+""",
+    },
+    'HC32F460xExx/HC32F45xxExx': {
+        'MCUName': "HC32F460xExx/HC32F45xxExx",
         'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
         'StartAddress': "00000000",
         'PageSize': "8192",
@@ -78,7 +424,217 @@ HDSC = {
         'BootloaderBaudrate': 115200,
         'RamCodeBinFile': "m_flash.hc010",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(PA13)     <--->    Serial.RXD\nMCU.RXD(PA14)     <--->    Serial.TXD\nMCU.MODE          <--->    MCU.GND\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA13)     <--->    Serial.RXD
+MCU.RXD(PA14)     <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+MCU.MODE          <--->    MCU.GND
+""",
+    },
+    'HC32F467': {
+        'MCUName': "HC32F467",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "128",
+        'FlashSize': "1M",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc467",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC            <--->    Serial.VCC
+MCU.GND            <--->    Serial.GND
+MCU.TXD(PA13,PB10) <--->    Serial.RXD
+MCU.RXD(PA14,PB11) <--->    Serial.TXD
+MCU.MODE           <--->    MCU.VCC
+""",
+    },
+    'HC32F472xCxx': {
+        'MCUName': "HC32F472xCxx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "32",
+        'FlashSize': "256K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc021",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC                <--->  Serial.VCC
+MCU.GND                <--->  Serial.GND
+MCU.TXD(PA2,PA9 ,PA13) <--->  Serial.RXD
+MCU.RXD(PA3,PA10,PA14) <--->  Serial.TXD
+MCU.MODE               <--->  MCU.VCC
+""",
+    },
+    'HC32F472xExx': {
+        'MCUName': "HC32F472xExx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "64",
+        'FlashSize': "512K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc021",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC                <--->  Serial.VCC
+MCU.GND                <--->  Serial.GND
+MCU.TXD(PA2,PA9 ,PA13) <--->  Serial.RXD
+MCU.RXD(PA3,PA10,PA14) <--->  Serial.TXD
+MCU.MODE               <--->  MCU.VCC
+""",
+    },
+    'HC32F4A0xGxx': {
+        'MCUName': "HC32F4A0xGxx",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "128",
+        'FlashSize': "1M",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc020",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC            <--->    Serial.VCC
+MCU.GND            <--->    Serial.GND
+MCU.TXD(PA13,PB10) <--->    Serial.RXD
+MCU.RXD(PA14,PB11) <--->    Serial.TXD
+MCU.MODE           <--->    MCU.VCC
+""",
+    },
+    'HC32F4A8': {
+        'MCUName': "HC32F4A8",
+        'FrequecyList': ["1000000", "500000", "256000", "128000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "8192",
+        'PageCount': "256",
+        'FlashSize': "2M",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc037",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC            <--->    Serial.VCC
+MCU.GND            <--->    Serial.GND
+MCU.TXD(PA13,PB10) <--->    Serial.RXD
+MCU.RXD(PA14,PB11) <--->    Serial.TXD
+MCU.MODE           <--->    MCU.VCC
+""",
+    },
+    'HC32IV01J8TA': {
+        'MCUName': "HC32IV01J8TA",
+        'FrequecyList': ["1000000", "256000", "128000", "115200", "76800", "38400", "19200", "9600"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "128",
+        'FlashSize': "64K",
+        'BootloaderBaudrate': 9600,
+        'RamCodeBinFile': "m_flash.hc006",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA09/PA14)<--->    Serial.RXD
+MCU.RXD(PA10/PA13)<--->    Serial.TXD
+MCU.MODE          <--->    MCU.VCC
+""",
+    },
+    'HC32L021': {
+        'MCUName': "HC32L021",
+        'FrequecyList': ["1000000", "250000", "115200", "76800", "57600", "38400", "19200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "128",
+        'FlashSize': "64",
+        'BootloaderBaudrate': 250000,
+        'RamCodeBinFile': "m_flash.hc048",
+        'WritePacketSize': 160,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA14)     <--->    Serial.RXD
+MCU.RXD(PA13)     <--->    Serial.TXD
+MCU.RSTB          <--->    Serial.RTS/DTR
+""",
+    },
+    'HC32L021x8xx': {
+        'MCUName': "HC32L021x8xx",
+        'FrequecyList': ["1500000", "1000000", "128000", "115200", "76800", "38400"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "128",
+        'FlashSize': "64K",
+        'BootloaderBaudrate': 100000,
+        'RamCodeBinFile': "m_flash.hc008",
+        'WritePacketSize': 240,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PD01)     <--->    Serial.RXD
+MCU.RXD(PC07)     <--->    Serial.TXD
+MCU.RSTB          <--->    Serial.RTS/DTR
+""",
+    },
+    'HC32L031': {
+        'MCUName': "HC32L031",
+        'FrequecyList': ["2000000", "1000000", "260000", "128000", "115200", "76800", "57600", "38400", "19200", "9600"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "128",
+        'FlashSize': "64",
+        'BootloaderBaudrate': 1000000,
+        'RamCodeBinFile': "m_flash.hc050",
+        'WritePacketSize': 160,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA14)     <--->    Serial.RXD
+MCU.RXD(PA13)     <--->    Serial.TXD
+MCU.RSTB          <--->    Serial.RTS/DTR
+""",
+    },
+    'HC32L110x4xx/HC32F003x4xx': {
+        'MCUName': "HC32L110x4xx/HC32F003x4xx",
+        'FrequecyList': ["691200", "230400", "115200", "38400", "19200", "9600"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "32",
+        'FlashSize': "16K",
+        'BootloaderBaudrate': 9600,
+        'RamCodeBinFile': "m_flash.hc005",
+        'WritePacketSize': 64,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(P31/P35)  <--->    Serial.RXD
+MCU.RXD(P27/P36)  <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+""",
+    },
+    'HC32L110x6xx/HC32F005x6xx': {
+        'MCUName': "HC32L110x6xx/HC32F005x6xx",
+        'FrequecyList': ["691200", "460800", "230400", "115200", "38400", "19200", "9600"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "64",
+        'FlashSize': "32K",
+        'BootloaderBaudrate': 9600,
+        'RamCodeBinFile': "m_flash.hc005",
+        'WritePacketSize': 64,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(P31/P35)  <--->    Serial.RXD
+MCU.RXD(P27/P36)  <--->    Serial.TXD
+MCU.RESET         <--->    Serial.RTS/DTR
+""",
+    },
+    'HC32L12xxAxx': {
+        'MCUName': "HC32L12xxAxx",
+        'FrequecyList': ["2000000", "1500000", "1000000", "500000", "250000", "115200", "19200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "256",
+        'FlashSize': "128K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc008",
+        'WritePacketSize': 240,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA14)     <--->    Serial.RXD
+MCU.RXD(PA13)     <--->    Serial.TXD
+MCU.BOOT0(PD03)   <--->    MCU.VCC
+""",
     },
     'HC32L13xx8/HC32F030x8': {
         'MCUName': "HC32L13xx8/HC32F030x8",
@@ -90,11 +646,16 @@ HDSC = {
         'BootloaderBaudrate': 9600,
         'RamCodeBinFile': "m_flash.hc006",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(PA09/PA14)<--->    Serial.RXD\nMCU.RXD(PA10/PA13)<--->    Serial.TXD\nMCU.MODE          <--->    MCU.VCC\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA09/PA14)<--->    Serial.RXD
+MCU.RXD(PA10/PA13)<--->    Serial.TXD
+MCU.MODE          <--->    MCU.VCC
+""",
     },
     'HC32L15xx8': {
         'MCUName': "HC32L15xx8",
-        'FrequecyList': ["Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
+        'FrequecyList': ["{", "Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
         'StartAddress': "00000000",
         'PageSize': "512",
         'PageCount': "128",
@@ -102,11 +663,16 @@ HDSC = {
         'BootloaderBaudrate': 9600,
         'RamCodeBinFile': "m_flash.hc001",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(P12)      <--->    Serial.RXD\nMCU.RXD(P11)      <--->    Serial.TXD\nMCU.MODE          <--->    MCU.VCC\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(P12)      <--->    Serial.RXD
+MCU.RXD(P11)      <--->    Serial.TXD
+MCU.MODE          <--->    MCU.VCC
+""",
     },
     'HC32L15xxA': {
         'MCUName': "HC32L15xxA",
-        'FrequecyList': ["Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
+        'FrequecyList': ["{", "Internal CR", "4MHz", "6MHz", "8MHz", "10MHz", "12MHz", "16MHz", "18MHz", "20MHz", "24MHz", "32MHz"],
         'StartAddress': "00000000",
         'PageSize': "512",
         'PageCount': "256",
@@ -114,55 +680,81 @@ HDSC = {
         'BootloaderBaudrate': 9600,
         'RamCodeBinFile': "m_flash.hc001",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(P12)      <--->    Serial.RXD\nMCU.RXD(P11)      <--->    Serial.TXD\nMCU.MODE          <--->    MCU.VCC\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(P12)      <--->    Serial.RXD
+MCU.RXD(P11)      <--->    Serial.TXD
+MCU.MODE          <--->    MCU.VCC
+""",
     },
-    'HC32L110x4xx/HC32F003x4xx/HC32L110B4/HC32L110C4/HC32F003C4': {
-        'MCUName': "HC32L110x4xx/HC32F003x4xx",
-        'FrequecyList': ["691200", "230400", "115200", "38400", "19200", "9600"],
+    'HC32L18xxAxx/HC32L16xxAxx': {
+        'MCUName': "HC32L18xxAxx/HC32L16xxAxx",
+        'FrequecyList': ["1000000", "256000", "128000", "115200", "76800", "38400", "19200"],
         'StartAddress': "00000000",
         'PageSize': "512",
-        'PageCount': "32",
-        'FlashSize': "16K",
-        'BootloaderBaudrate': 9600,
-        'RamCodeBinFile': "m_flash.hc005",
-        'WritePacketSize': 64,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(P31/P35)  <--->    Serial.RXD\nMCU.RXD(P27/P36)  <--->    Serial.TXD\nMCU.RESET         <--->    Serial.RTS/DTR\n",
+        'PageCount': "256",
+        'FlashSize': "128K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc008",
+        'WritePacketSize': 240,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.SWCLK(PA14)   <--->    Serial.RXD
+MCU.SWDIO(PA13)   <--->    Serial.TXD
+MCU.BOOT0         <--->    MCU.VCC
+""",
     },
-    'HC32L110x6xx/HC32F005x6xx/HC32L110B6/HC32L110C6/HC32F005C6': {
-        'MCUName': "HC32L110x6xx/HC32F005x6xx",
-        'FrequecyList': ["691200", "460800", "230400", "115200", "38400", "19200", "9600"],
-        'StartAddress': "00000000",
-        'PageSize': "512",
-        'PageCount': "64",
-        'FlashSize': "32K",
-        'BootloaderBaudrate': 9600,
-        'RamCodeBinFile': "m_flash.hc005",
-        'WritePacketSize': 64,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(P31/P35)  <--->    Serial.RXD\nMCU.RXD(P27/P36)  <--->    Serial.TXD\nMCU.RESET         <--->    Serial.RTS/DTR\n",
-    },
-    'HC32M120': {
-        'MCUName': "HC32M120",
-        'FrequecyList': ["1000000"],
-        'StartAddress': "00000000",
-        'PageSize': "512",
-        'PageCount': "32",
-        'FlashSize': "16K",
-        'BootloaderBaudrate': 1000000,
-        'RamCodeBinFile': "m_flash.hc013",
-        'WritePacketSize': 512,
-        'IspConnection': "Half-duplex: VCC,GND,TOOL0,NRST\nFull-duplex: VCC,GND,TXD,RXD,TOOL0,NRST\n",
-    },
-    'HC32x19xxCxx': {
-        'MCUName': "HC32x19xxCxx",
+    'HC32L18xxCxx/HC32L16xxCxx': {
+        'MCUName': "HC32L18xxCxx/HC32L16xxCxx",
         'FrequecyList': ["1000000", "256000", "128000", "115200", "76800", "38400", "19200"],
         'StartAddress': "00000000",
         'PageSize': "512",
         'PageCount': "512",
         'FlashSize': "256K",
         'BootloaderBaudrate': 115200,
-        'RamCodeBinFile': "m_flash.hc015",
+        'RamCodeBinFile': "m_flash.hc008",
+        'WritePacketSize': 240,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.SWCLK(PA14)   <--->    Serial.RXD
+MCU.SWDIO(PA13)   <--->    Serial.TXD
+MCU.BOOT0         <--->    MCU.VCC
+""",
+    },
+    'HC32M120': {
+        'MCUName': "HC32M120",
+        'FrequecyList': ["1000000"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "64",
+        'FlashSize': "32K",
+        'BootloaderBaudrate': 1000000,
+        'RamCodeBinFile': "m_flash.hc013",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(PA14)     <--->    Serial.RXD\nMCU.RXD(PA13)     <--->    Serial.TXD\nMCU.BOOT0         <--->    MCU.VCC\n",
+        'IspConnection': """请确认目标芯片与转接板的连接：
+半双工：VCC,GND,TOOL0,NRST
+全双工：VCC,GND,TXD,RXD,TOOL0,NRST
+""",
+    },
+    'HC32M423xAxx': {
+        'MCUName': "HC32M423xAxx",
+        'FrequecyList': ["1000000", "115200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "256",
+        'FlashSize': "128K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc017",
+        'WritePacketSize': 512,
+        'IspConnection': """请确认目标芯片与XHSC DAP的连接：
+UART单线：                          |        UART双线：
+MCU.VCC        <---> DAP.VCC        |        MCU.VCC          <---> DAP.VCC
+MCU.GND        <---> DAP.GND        |        MCU.GND          <---> DAP.GND
+MCU.TOOL0(P50) <---> DAP.DIO(TOOL0) |        MCU.TOOL0(P50)   <---> DAP.DIO(TOOL0)
+MCU.RST        <---> DAP.RST        |        MCU.RST          <---> DAP.RST
+DAP.ISP        <---> DAP.GND        |        MCU.SWDCLK(PB1)  <---> DAP.TX
+                                    |        MCU.SWDIO(PB2)   <---> DAP.RX
+                                    |        DAP.ISP          <---> DAP.GND""",
     },
     'HC32x07xxAxx/HC32x17xxAxx': {
         'MCUName': "HC32x07xxAxx/HC32x17xxAxx",
@@ -174,10 +766,31 @@ HDSC = {
         'BootloaderBaudrate': 115200,
         'RamCodeBinFile': "m_flash.hc008",
         'WritePacketSize': 512,
-        'IspConnection': "MCU.VCC           <--->    Serial.VCC\nMCU.GND           <--->    Serial.GND\nMCU.TXD(PA14)     <--->    Serial.RXD\nMCU.RXD(PA13)     <--->    Serial.TXD\nMCU.BOOT0         <--->    MCU.VCC\n",
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA14)     <--->    Serial.RXD
+MCU.RXD(PA13)     <--->    Serial.TXD
+MCU.BOOT0         <--->    MCU.VCC
+""",
+    },
+    'HC32x19xxCxx': {
+        'MCUName': "HC32x19xxCxx",
+        'FrequecyList': ["1000000", "256000", "128000", "115200", "76800", "38400", "19200"],
+        'StartAddress': "00000000",
+        'PageSize': "512",
+        'PageCount': "512",
+        'FlashSize': "256K",
+        'BootloaderBaudrate': 115200,
+        'RamCodeBinFile': "m_flash.hc015",
+        'WritePacketSize': 512,
+        'IspConnection': """MCU.VCC           <--->    Serial.VCC
+MCU.GND           <--->    Serial.GND
+MCU.TXD(PA14)     <--->    Serial.RXD
+MCU.RXD(PA13)     <--->    Serial.TXD
+MCU.BOOT0         <--->    MCU.VCC
+""",
     },
 }
-
 
 class TransportError(Exception):
     """Custom exception to represent errors with a transport
@@ -337,6 +950,34 @@ class SerialTransport():
         self.serial.dtr = self.SET
         return True
 
+from difflib import get_close_matches
+def find_device_simple(input_device, hdsc_keys):
+    input_upper = input_device.upper()
+    
+    # 构建候选映射
+    candidates = {}
+    for device in hdsc_keys:
+        candidates[device.upper()] = device
+        for part in device.split('/'):
+            candidates[part.upper()] = device
+    
+    # 模糊匹配
+    matches = get_close_matches(input_upper, candidates.keys(), n=8, cutoff=0.75)
+    if not matches: return None
+
+    # 子串匹配
+    best_match, match_cnt = None, 0
+    if matches and len(matches)>1:
+        for m in matches:
+            prefix_len = 0
+            for i in range(min(len(input_upper), len(m))):
+                if input_upper[i] != m[i]: break
+                prefix_len += 1
+            if prefix_len > match_cnt:
+                best_match, match_cnt = m, prefix_len
+
+    return candidates[best_match] if best_match else candidates[matches[0]]
+
 if __name__ == '__main__':
     # parse arguments or use defaults
     parser = argparse.ArgumentParser(description='HC32xx Flash Downloader.')
@@ -359,14 +1000,12 @@ if __name__ == '__main__':
     args.rfile,args.wfile,args.vfile = args.r,args.w,args.v
 
     # check device
-    _ = None
-    for dev in HDSC.keys():
-        if dev.upper().find(args.dev.upper()) >= 0:
-            args.dev,_ = dev,dev
-            break
-    if not _:
+    matched_device = find_device_simple(args.dev, list(HDSC.keys()))
+    if not matched_device:
         sys.stdout.write("Invalid Device name '%s'.\n\nList of support device:\n" % args.dev)
         args.list = True
+    else:
+        args.dev = matched_device
 
     if args.list:
         for dev in HDSC.keys():
@@ -431,7 +1070,7 @@ if __name__ == '__main__':
     # stage 3. load ramcode
     sys.stdout.write("Stage 3. Load ramcode: ")
     sys.stdout.flush()
-    _f = os.path.join(base_dir, 'hdsc', 'HDSC.'+hc32xx['RamCodeBinFile'])
+    _f = os.path.join(base_dir, 'hdsc', 'XHSC.'+hc32xx['RamCodeBinFile'])
     if transport.load_ramcode(_f):
         sys.stdout.write("%s\n" % hc32xx['RamCodeBinFile'])
     else:
